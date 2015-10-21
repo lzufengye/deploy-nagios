@@ -1,0 +1,16 @@
+- hosts: nagios-server
+  remote_user: gqzhao
+  sudo: yes
+  roles:
+  - lamp
+  - nagios-server
+- hosts: nagios-agents
+  remote_user: gqzhao
+  sudo: yes
+  roles:
+  - nagios-agent
+- hosts: nagios-server
+  remote_user: gqzhao
+  sudo: yes
+  roles:
+  - nagios-monitor-target

@@ -1,0 +1,5 @@
+[nagios-server]
+192.168.59.103
+
+[nagios-agents]
+192.168.59.105

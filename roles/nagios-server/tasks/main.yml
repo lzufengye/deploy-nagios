@@ -1,0 +1,53 @@
+- name: Create a new nagcmd group for allowing external commands to be submitted through the web interface.
+  group: name=nagcmd
+- name: Create a new nagios user account
+  user: name=nagios password=nagios group=nagcmd
+  user: name=www-data group=nagcmd
+- name: Create download directory in /tmp
+  file: state=directory path=/tmp/downloads
+- name: Download nagios
+  get_url: url=https://assets.nagios.com/downloads/nagioscore/releases/nagios-4.1.1.tar.gz
+           dest=/tmp/downloads/nagios-4.1.1.tar.gz
+- name: Extract nagios
+  unarchive: src=/tmp/downloads/nagios-4.1.1.tar.gz dest=/tmp/downloads/ copy=no
+- name:
+  command: chdir=/tmp/downloads/nagios-4.1.1 ./configure --with-command-group=nagcmd
+- name:  
+  command: chdir=/tmp/downloads/nagios-4.1.1 make all
+- name:  
+  command: chdir=/tmp/downloads/nagios-4.1.1 make install
+- name:  
+  command: chdir=/tmp/downloads/nagios-4.1.1 make install-init
+- name:  
+  command: chdir=/tmp/downloads/nagios-4.1.1 make install-config
+- name:  
+  command: chdir=/tmp/downloads/nagios-4.1.1 make install-commandmode
+- name: Install nagios web interface
+  command: chdir=/tmp/downloads/nagios-4.1.1 /usr/bin/install -c -m 644 sample-config/httpd.conf /etc/apache2/sites-enabled/nagios.conf
+- name:
+  apt: name=python-passlib state=latest install_recommends=yes
+- name: Create a nagiosadmin account for logging into the Nagios web interface
+  htpasswd: path=/usr/local/nagios/etc/htpasswd.users name=nagiosadmin password=nagiosadmin
+- name: Download nagios plugin
+  get_url: url=http://www.nagios-plugins.org/download/nagios-plugins-2.1.1.tar.gz
+           dest=/tmp/downloads/nagios-plugins-2.1.1.tar.gz
+- name: Extract nagios plugin
+  unarchive: src=/tmp/downloads/nagios-plugins-2.1.1.tar.gz dest=/tmp/downloads/ copy=no
+- name:
+  command: chdir=/tmp/downloads/nagios-plugins-2.1.1 ./configure --with-nagios-user=nagios --with-nagios-group=nagios
+- name:  
+  command: chdir=/tmp/downloads/nagios-plugins-2.1.1 make
+- name: Install nagios plugin
+  command: chdir=/tmp/downloads/nagios-plugins-2.1.1 make install
+- name: Create nagios target directory
+  file: state=directory path=/usr/local/nagios/etc/servers
+- name: Config nagios target directory
+  replace: dest=/usr/local/nagios/etc/nagios.cfg regexp='#cfg_dir=/usr/local/nagios/etc/servers' replace='cfg_dir=/usr/local/nagios/etc/servers' backup=yes
+- name: Enable apache rewrite and cgi modules
+  command: a2enmod rewrite
+- name:
+  command: a2enmod cgi
+- name: Restart apache
+  service: name=apache2 state=restarted
+- name: Start nagios
+  service: name=nagios state=started

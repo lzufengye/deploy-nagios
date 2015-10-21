@@ -1,0 +1,8 @@
+- name: Install nrpe
+  apt: name=nagios-nrpe-server state=present
+- name: Install nagios-plugins   
+  apt: name=nagios-plugins state=present
+- name: Config nagios server ip
+  replace: dest=/etc/nagios/nrpe.cfg regexp='allowed_hosts=127\.0\.0\.1' replace='allowed_hosts=127.0.0.1 192.168.59.103' backup=yes
+- name: Start nrpe service
+  service: name=nagios-nrpe-server state=restarted

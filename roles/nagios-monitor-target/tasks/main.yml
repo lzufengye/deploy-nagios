@@ -1,0 +1,4 @@
+- name: Copy target configuration file
+  copy: src=files/clients.cfg dest=/usr/local/nagios/etc/servers/clients.cfg mode='u=rw,g=r,o=r'
+- name: Restart nagios service
+  service: name=nagios state=restarted
