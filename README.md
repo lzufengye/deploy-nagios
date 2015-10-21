@@ -6,8 +6,8 @@
 
 	[nagios-agents]
 	192.168.59.105 //nagios agent here
-3. Create client configuration file
-	//files/clients.cfg
+3. Add target configuration file
+	//In target-configurations/clients.cfg
 	define host {
 		use                             linux-server
 		host_name                       nagios-agent-1
