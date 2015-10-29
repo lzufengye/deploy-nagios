@@ -1,8 +1,44 @@
+- name: Install make
+  yum: name=make state=present
+- name: Create download directory in /tmp
+  file: state=directory path=/tmp/downloads
+- name: Install openssl-devel
+  yum: name=openssl-devel state=present
+- name: Install xinetd
+  yum: name=xinetd state=present
+- name: Create a new nagios group
+  group: name=nagios
+- name: Create a new nagios user account
+  user: name=nagios password=nagios group=nagios
+- name: Download nagios plugin
+  get_url: url=http://www.nagios-plugins.org/download/nagios-plugins-2.1.1.tar.gz
+           dest=/tmp/downloads/nagios-plugins-2.1.1.tar.gz
+- name: Extract nagios plugin
+  unarchive: src=/tmp/downloads/nagios-plugins-2.1.1.tar.gz dest=/tmp/downloads/ copy=no
+- name: Configure nagios plugin intall
+  command: chdir=/tmp/downloads/nagios-plugins-2.1.1 ./configure
+- name: Install nagios plugin
+  command: chdir=/tmp/downloads/nagios-plugins-2.1.1 make
+- name: Install nagios plugin
+  command: chdir=/tmp/downloads/nagios-plugins-2.1.1 make all
+- name: Download nrpe
+  get_url: url=http://prdownloads.sourceforge.net/sourceforge/nagios/nrpe-2.15.tar.gz
+           dest=/tmp/downloads/nrpe-2.15.tar.gz
+- name: Extract nrpe
+  unarchive: src=/tmp/downloads/nrpe-2.15.tar.gz dest=/tmp/downloads/ copy=no
 - name: Install nrpe
-  apt: name=nagios-nrpe-server state=present
-- name: Install nagios-plugins   
-  apt: name=nagios-plugins state=present
+  command: chdir=/tmp/downloads/nrpe-2.15 ./configure
+- name: Install nrpe
+  command: chdir=/tmp/downloads/nrpe-2.15 make all
+- name: Install plugin
+  command: chdir=/tmp/downloads/nrpe-2.15 make install-plugin
+- name: Install daemon
+  command: chdir=/tmp/downloads/nrpe-2.15 make install-daemon-config
+- name: Install xinetd
+  command: chdir=/tmp/downloads/nrpe-2.15 make install-xinetd
 - name: Config nagios server ip
-  replace: dest=/etc/nagios/nrpe.cfg regexp='allowed_hosts=127\.0\.0\.1' replace='allowed_hosts=127.0.0.1 {{ groups['nagios-server'][0] }}' backup=yes
-- name: Start nrpe service
-  service: name=nagios-nrpe-server state=restarted
+  replace: dest=/usr/local/nagios/etc/nrpe.cfg regexp='allowed_hosts=127\.0\.0\.1' replace='allowed_hosts=127.0.0.1 {{ groups['nagios-server'][0] }}' backup=yes
+- name: Config nagios server ip for xinetd
+  replace: dest=/etc/xinetd.d/nrpe regexp='[ \t]?only_from[ \t]?=[ \t]?127\.0\.0\.1' replace='only_from=127.0.0.1 {{ groups['nagios-server'][0] }}' backup=yes
+- name: Start xinetd service
+  service: name=xinetd state=restarted

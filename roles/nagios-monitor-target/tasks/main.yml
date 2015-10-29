@@ -1,8 +1,7 @@
 - name: Ensure target configuration files exist
-  file: dest=/etc/fooapp state=directory
-- name: Copy target configuration file
-  copy: src={{ item }} dest=/usr/local/nagios/etc/servers/ mode='u=rw,g=r,o=r'
+  file: dest=/usr/local/nagios/etc/servers state=directory
+- copy: src={{ item }} dest=/usr/local/nagios/etc/servers/ mode='u=rw,g=r,o=r'
   with_fileglob:
-    - target-configurations/*
+    - "{{ playbook_dir }}/target-configurations/*"
 - name: Restart nagios service
   service: name=nagios state=restarted

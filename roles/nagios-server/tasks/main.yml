@@ -1,8 +1,9 @@
-- name: Create a new nagcmd group for allowing external commands to be submitted through the web interface.
-  group: name=nagcmd
+- name: Create a new nagios group for allowing external commands to be submitted through the web interface.
+  group: name=nagios
 - name: Create a new nagios user account
-  user: name=nagios password=nagios group=nagcmd
-  user: name=www-data group=nagcmd
+  user: name=nagios password=nagios group=nagios
+- name: Create a new www-data user account
+  user: name=www-data group=nagios
 - name: Create download directory in /tmp
   file: state=directory path=/tmp/downloads
 - name: Download nagios
@@ -10,22 +11,31 @@
            dest=/tmp/downloads/nagios-4.1.1.tar.gz
 - name: Extract nagios
   unarchive: src=/tmp/downloads/nagios-4.1.1.tar.gz dest=/tmp/downloads/ copy=no
-- name:
-  command: chdir=/tmp/downloads/nagios-4.1.1 ./configure --with-command-group=nagcmd
-- name:  
+- name: Installing nagios
+  command: chdir=/tmp/downloads/nagios-4.1.1 ./configure --with-command-group=nagios
+- name: Installing nagios
   command: chdir=/tmp/downloads/nagios-4.1.1 make all
-- name:  
+- name: Installing nagios
   command: chdir=/tmp/downloads/nagios-4.1.1 make install
-- name:  
+- name: Installing nagios
   command: chdir=/tmp/downloads/nagios-4.1.1 make install-init
-- name:  
+- name: Installing nagios
   command: chdir=/tmp/downloads/nagios-4.1.1 make install-config
-- name:  
+- name: Installing nagios
   command: chdir=/tmp/downloads/nagios-4.1.1 make install-commandmode
+- name: Installing nagios
+  command: chdir=/tmp/downloads/nagios-4.1.1 make install-webconf
+- name: Create new virtual host files
+  file: state=directory path=/etc/apache2/sites-enabled
 - name: Install nagios web interface
   command: chdir=/tmp/downloads/nagios-4.1.1 /usr/bin/install -c -m 644 sample-config/httpd.conf /etc/apache2/sites-enabled/nagios.conf
-- name:
-  apt: name=python-passlib state=latest install_recommends=yes
+- name: Download passlib
+  get_url: url=https://pypi.python.org/packages/source/p/passlib/passlib-1.6.5.tar.gz
+           dest=/tmp/downloads/passlib-1.6.5.tar.gz
+- name: Extract passlib
+  unarchive: src=/tmp/downloads/passlib-1.6.5.tar.gz dest=/tmp/downloads/ copy=no
+- name: Install passlib
+  command: chdir=/tmp/downloads/passlib-1.6.5 python setup.py install
 - name: Create a nagiosadmin account for logging into the Nagios web interface
   htpasswd: path=/usr/local/nagios/etc/htpasswd.users name=nagiosadmin password=nagiosadmin
 - name: Download nagios plugin
@@ -43,11 +53,11 @@
   file: state=directory path=/usr/local/nagios/etc/servers
 - name: Config nagios target directory
   replace: dest=/usr/local/nagios/etc/nagios.cfg regexp='#cfg_dir=/usr/local/nagios/etc/servers' replace='cfg_dir=/usr/local/nagios/etc/servers' backup=yes
-- name: Enable apache rewrite and cgi modules
-  command: a2enmod rewrite
-- name:
-  command: a2enmod cgi
+- name: Enable apache rewrite modules
+  replace: dest=/etc/httpd/conf/httpd.conf regexp='AllowOverride None' replace='AllowOverride All' backup=yes
+- name: Enable apache cgi modules
+  replace: dest=/etc/httpd/conf/httpd.conf regexp='#AddHandler cgi-script .cgi' replace='AddHandler cgi-script .cgi .pl' backup=yes
 - name: Restart apache
-  service: name=apache2 state=restarted
+  service: name=httpd state=started
 - name: Start nagios
   service: name=nagios state=started
