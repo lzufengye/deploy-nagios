@@ -1,12 +1,12 @@
-1. Install ansible
+#1. Install ansible
 	brew install ansible
-2. Modify hosts file
+#2. Modify hosts file
 	[nagios-server]
 	192.168.59.103 //nagios sever here
 
 	[nagios-agents]
 	192.168.59.105 //nagios agent here
-3. Add target configuration file
+#3. Add target configuration file
 	//In target-configurations/clients.cfg
 	define host {
 		use                             linux-server
@@ -18,5 +18,5 @@
 		notification_interval           30
 		notification_period             24x7
 	}	
-4. Run playbook
+#4. Run playbook
 	ansible-playbook deploy.yml -i hosts --ask-pass -K	
